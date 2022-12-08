@@ -1,1 +1,4 @@
+#!/bin/bash
+source ../.env
+
 casper-client account-address --public-key $1

@@ -1,5 +1,8 @@
-aws kms get-public-key --key-id 67839aca-2a51-4bb5-8323-0774ecc989f4  --output json --no-cli-pager
+#!/bin/bash
+source ../.env
+
+aws kms get-public-key --key-id $KMS_FROM_KEY_ID  --output json --no-cli-pager
 echo "-----BEGIN PUBLIC KEY-----" > key.pub
-aws kms get-public-key --key-id 67839aca-2a51-4bb5-8323-0774ecc989f4  --output text --query PublicKey >> key.pub
+aws kms get-public-key --key-id $KMS_FROM_KEY_ID  --output text --query PublicKey >> key.pub
 echo "-----END PUBLIC KEY-----" >> key.pub
 cat key.pub

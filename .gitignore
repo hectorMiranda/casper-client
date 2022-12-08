@@ -5,3 +5,4 @@ npm-debug.log
 .DS_Store
 keys
 package-lock.json
+bash/key.pub
