@@ -3,6 +3,10 @@ A project to interact with the casper network and AWS KMS
 
 # Content
 - Bash folder: Some bash scripts to interact with AWS KMS  
+    - get-account-hash: returns the account hash, expect a pub file location as param.
+    - get-from-public-key: create a from-public-key.pub file that can be used to produce the account hash for the FROM account.
+    - get-to-public-key: create a to-public-key.pub file that can be used to produce the account hash for the TO account.
+
 - contracts folder: Sample contracts and deploy outputs
 - casper-client.js: a nodejs app that uses the casper-js-sdk and the aws-sdk
 

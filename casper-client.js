@@ -17,24 +17,25 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const { Keys, CasperClient, CLPublicKey, DeployUtil } = require("casper-js-sdk");
+const { Console } = require("console");
 const RPC_API = "https://rpc.testnet.casperlabs.io/rpc";
 const STATUS_API = "http://52.3.38.81:8888/status";
-const rl = readline.createInterface({
+const prompt = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
 console.log([
   '1. Send transfer with local secrets',
-  '2. Send transfer with cloud secrets',
-  '3. Get cloud public key',
-  '4. Get account from cloud',
+  '2. Send transfer to KMS account',
+  '3. Get FROM KMS account public key',
+  '4. Get TO KMS account public key',
   '5. Sign deploy with cloud',
   '6. Get transfer body',
   '0. Quit',
 ].join('\n'));
 
-rl.question('# ', (answer) => {
+prompt.question('# ', (answer) => {
   switch (answer) {
     case '1':
       sendTransferWithLocalSecrets({
@@ -42,27 +43,27 @@ rl.question('# ', (answer) => {
         to: process.env.TO_LOCAL_SECRET,
         amount: 2500000000,
       });
-      rl.close();
+      prompt.close();
       break;
     case '2':
-      sendTransferWithCloudSecrets({
+      sendTransferToCloudAccount({
         from: process.env.FROM_LOCAL_SECRET,
-        to: process.env.TO_LOCAL_SECRET,
-        amount: 2490000000,
+        to: process.env.KMS_TO_ACCOUNT_HASH,
+        amount: 2500000000,
       });
-      rl.close();
+      prompt.close();
       break;
     case '3':
-      getPublicKeyFromCloud();
-      rl.close();
+      getFromAccountInKMS();
+      prompt.close();
       break;
     case '4':
-      getAccountFromCloud();
-      rl.close();
+      getToAccountInKMS();
+      prompt.close();
       break;
     case '5':
         console.log(sign());
-        rl.close();
+        prompt.close();
         break;
     case '6':
       getTransferBody({
@@ -70,10 +71,10 @@ rl.question('# ', (answer) => {
         to: process.env.TO_LOCAL_SECRET,
         amount: 2490000000,
       });
-      rl.close();
+      prompt.close();
         break;
   default:
-      rl.close();
+      prompt.close();
       break;
   }
 });
@@ -129,23 +130,24 @@ const sign = async () => {
 }
 
 
-const getPublicKeyFromCloud = async () => {
+const getFromAccountInKMS = async () => {
+  console.log('FROM account in KMS');
   var response = kms.getPublicKey({
-    KeyId: '67839aca-2a51-4bb5-8323-0774ecc989f4'
+    KeyId: process.env.KMS_FROM_KEY_ID 
   }, function (err, data) {
     if (err) console.log(err, err.stack);
     else {
-      console.log(data.PublicKey);
-      console.log(data);
+      console.log(Buffer.from(data.PublicKey).toString('base64'));
     }
   });
 }
 
-const getAccountFromCloud = async () => {
+const getToAccountInKMS = async () => {
+  console.log('TO account in KMS');
   var public_key=null;
   
   kms.getPublicKey({
-    KeyId: process.env.KMS_FROM_KEY_ID
+    KeyId: process.env.KMS_TO_KEY_ID
   }, function (err, data) {
     if (err) console.log(err, err.stack);
     else {
@@ -358,7 +360,28 @@ const sendTransferWithLocalSecrets = async ({ from, to, amount }) => {
 
 
 
-const sendTransferWithCloudSecrets = async ({ from, to, amount }) => {
+const showNodeInfo = async () => {
+
+  const response = await axios.get(STATUS_API + "/status");
+
+  let networkName = null;
+  let apiVersion = null;
+  let startingStateRootHash = null;
+
+  if (response.status == 200) {
+    networkName = response.data.chainspec_name;
+    apiVersion = response.data.api_version;
+    startingStateRootHash = response.data.starting_state_root_hash;
+  }
+
+  console.log(`Network: ${networkName}`);
+  console.log(`API Version: ${apiVersion}`);
+  console.log(`Starting state root hash: ${startingStateRootHash}`);
+
+}
+
+
+const sendTransferToCloudAccount = async ({ from, to, amount }) => {
   const casperClient = new CasperClient(RPC_API);
   const folder = path.join("./", "keys/secp256k1-from-keys");
 
@@ -390,10 +413,13 @@ const sendTransferWithCloudSecrets = async ({ from, to, amount }) => {
 
   console.log(`Is Public key Secp256K1? ${signKeyPair.publicKey.isSecp256K1()}`);
   console.log("Public key hex " + signKeyPair.publicKey.toHex());
-  console.log("Public key str " + signKeyPair.publicKey.toAccountHashStr());
+  console.log("Public key to account hex " + signKeyPair.publicKey.toAccountHex());
+
+  //const toPublicKey = CLPublicKey.fromHex(to);
 
   const toPublicKey = CLPublicKey.fromHex(to);
 
+  
   const session = DeployUtil.ExecutableDeployItem.newTransfer(amount, toPublicKey, null, id);
 
   const payment = DeployUtil.standardPayment(paymentAmount);

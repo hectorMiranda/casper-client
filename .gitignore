@@ -6,3 +6,5 @@ npm-debug.log
 keys
 package-lock.json
 bash/key.pub
+bash/get-to-public-key.pub
+bash/get-from-public-key.pub
