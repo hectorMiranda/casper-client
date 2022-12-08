@@ -1,0 +1,1 @@
+casper-client account-address --public-key $1
