@@ -24,13 +24,15 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-console.log('1. Send transfer local secrets');
-console.log('2. Send transfer with cloud secrets');
-console.log('3. Get cloud public key');
-console.log('4. get account from cloud');
-console.log('5. Sign deploy with cloud');
-console.log('6. Get transfer body');
-console.log('Enter = quit');
+console.log([
+  '1. Send transfer with local secrets',
+  '2. Send transfer with cloud secrets',
+  '3. Get cloud public key',
+  '4. Get account from cloud',
+  '5. Sign deploy with cloud',
+  '6. Get transfer body',
+  '0. Quit',
+].join('\n'));
 
 rl.question('# ', (answer) => {
   switch (answer) {
